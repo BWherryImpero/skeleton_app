@@ -1,0 +1,60 @@
+# syntax = docker/dockerfile:1
+
+# Make sure RUBY_VERSION matches the Ruby version in .ruby-version and Gemfile
+ARG RUBY_VERSION=3.2.2 \
+    CONTAINER_GID=1000 \
+    CONTAINER_UID=1000 \
+    CONTAINER_USER=rails \
+    NODE_VERSION=18.17.1 \
+    YARN_VERSION=1.22.19
+
+FROM registry.docker.com/library/ruby:$RUBY_VERSION-slim
+
+ARG CONTAINER_GID \
+    CONTAINER_UID \
+    CONTAINER_USER \
+    NODE_VERSION \
+    YARN_VERSION
+
+# Rails app lives here
+WORKDIR /rails
+
+# Set development environment
+ENV RAILS_ENV="development" \
+    BUNDLE_PATH="/usr/local/bundle"
+
+SHELL ["/bin/bash", "-l", "-c"]
+
+# Install packages needed to build gems and node modules
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+        build-essential \
+        curl \
+        git \
+        libpq-dev \
+        libvips \
+        pkg-config \
+        python-is-python3
+
+# Install application gems
+COPY Gemfile Gemfile.lock ./
+RUN bundle install && \
+    rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git
+
+# Run and own only the runtime files as a non-root user for security
+RUN groupadd --gid ${CONTAINER_GID} ${CONTAINER_USER} &&\
+    useradd ${CONTAINER_USER} --create-home --shell /bin/bash --gid ${CONTAINER_GID} --uid ${CONTAINER_UID} && \
+    chown -R ${CONTAINER_USER}:${CONTAINER_USER} /rails ${BUNDLE_PATH}
+USER ${CONTAINER_USER}:${CONTAINER_USER}
+
+RUN curl -L https://bit.ly/n-install | bash -s -- -y ${NODE_VERSION} && \
+    export N_PREFIX="$HOME/n" && \
+    export PATH="$PATH:$N_PREFIX/bin" && \
+    npm i -g npm yarn
+
+# Entrypoint prepares the database.
+ENTRYPOINT ["/rails/bin/docker-entrypoint"]
+
+# Start the server by default, this can be overwritten at runtime
+EXPOSE 3000
+CMD ["./bin/rails", "s", "-b", "0.0.0.0"]

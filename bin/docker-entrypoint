@@ -1,0 +1,11 @@
+#!/bin/bash -e
+
+export N_PREFIX="$HOME/n"
+export PATH="$PATH:$N_PREFIX/bin"
+
+# If running the rails server then create or migrate existing database
+if [ "${*}" == "./bin/rails server" ]; then
+  ./bin/rails db:prepare
+fi
+
+exec "${@}"
