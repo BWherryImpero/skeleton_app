@@ -30,8 +30,8 @@ services:
     ports:
       - "3000:3000"
     tmpfs:
-      - /rails/tmp,gid=${CONTAINER_GID},uid=${CONTAINER_UID}
-      - /tmp,gid=${CONTAINER_GID},uid=${CONTAINER_UID}
+      - /rails/tmp:mode=770,gid=${CONTAINER_GID},uid=${CONTAINER_UID}
+      - /tmp:mode=770,gid=${CONTAINER_GID},uid=${CONTAINER_UID}
     volumes:
       - type: bind
         source: .
