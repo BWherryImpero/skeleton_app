@@ -10,6 +10,14 @@ Sadly, NodeJS is still required on the application server, because bootsnap.
 
 Copy `example.env` to `.env` and edit your `CONTAINER_*` values to reflect your system user values.
 
+Create your database with `docker compose run --rm web bundle exec rails db:reset`
+
 Then run: `docker compose up`.
 
-Your application should be available at: `http://localhost:3000`
+Your application should be available at: `http://localhost:8000`
+Your Postgresql database will be available at:
+    host: localhost
+    port: 5433
+    db: skeleton_app_development
+    user: skeleton_admin
+    password: womble
